@@ -1,48 +1,45 @@
-RUN echo "/srv/swift-disk /mnt/sdb1 xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" >> /etc/fstab
+#!/bin/bash
+set -x
+set -e
+echo "=> Using a loopback device for storage"
+mkfs.xfs /srv/swift-disk 
+echo "/srv/swift-disk /mnt/sdb1 xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" >> /etc/fstab
+mkdir -p /mnt/sdb1/1 /mnt/sdb1/2 /mnt/sdb1/3 /mnt/sdb1/4 && \
+sudo chown root:root /mnt/sdb1/* && \
+for x in {1..4}; do sudo ln -s /mnt/sdb1/$x /srv/$x; done && \
+sudo mkdir -p /srv/1/node/sdb1 /srv/1/node/sdb5 \
+              /srv/2/node/sdb2 /srv/2/node/sdb6 \
+              /srv/3/node/sdb3 /srv/3/node/sdb7 \
+              /srv/4/node/sdb4 /srv/4/node/sdb8 \
+              /var/run/swift && \
+sudo chown -R root:root /var/run/swift && \
+for x in {1..4}; do sudo chown -R root:root /srv/$x/; done
 
-RUN sudo mkdir /mnt/sdb1 && \
-    sudo mount /mnt/sdb1 
- 
-#    sudo mkdir /mnt/sdb1/1 /mnt/sdb1/2 /mnt/sdb1/3 /mnt/sdb1/4 && \
-#    sudo chown ${USER}:${USER} /mnt/sdb1/* && \
-#    for x in {1..4}; do sudo ln -s /mnt/sdb1/$x /srv/$x; done && \
-#    sudo mkdir -p /srv/1/node/sdb1 /srv/1/node/sdb5 \
-#                  /srv/2/node/sdb2 /srv/2/node/sdb6 \
-#                  /srv/3/node/sdb3 /srv/3/node/sdb7 \
-#                  /srv/4/node/sdb4 /srv/4/node/sdb8 \
-#                  /var/run/swift && \
-#    sudo chown -R ${USER}:${USER} /var/run/swift && \
-#    for x in {1..4}; do sudo chown -R ${USER}:${USER} /srv/$x/; done
-
+echo
+echo "=> Starting memcached"
 sudo service memcached start
 
-# 
-#!/bin/bash
+echo
+echo "=> Configuring each node"
+cd $HOME/swift/doc; sudo cp -r saio/swift /etc/; cd -
+sudo chown -R root:root /etc/swift
+find /etc/swift/ -name \*.conf | xargs sudo sed -i "s/<your-user-name>/root/"
 
-swift-init all stop
-# Remove the following line if you did not set up rsyslog for individual logging:
-sudo find /var/log/swift -type f -exec rm -f {} \;
-sudo umount /mnt/sdb1
-# If you are using a loopback device set SAIO_BLOCK_DEVICE to "/srv/swift-disk"
-sudo mkfs.xfs -f ${SAIO_BLOCK_DEVICE:-/dev/sdb1}
-sudo mount /mnt/sdb1
-sudo mkdir /mnt/sdb1/1 /mnt/sdb1/2 /mnt/sdb1/3 /mnt/sdb1/4
-sudo chown ${USER}:${USER} /mnt/sdb1/*
-mkdir -p /srv/1/node/sdb1 /srv/1/node/sdb5 \
-         /srv/2/node/sdb2 /srv/2/node/sdb6 \
-         /srv/3/node/sdb3 /srv/3/node/sdb7 \
-         /srv/4/node/sdb4 /srv/4/node/sdb8
-sudo rm -f /var/log/debug /var/log/messages /var/log/rsyncd.log /var/log/syslog
-find /var/cache/swift* -type f -name *.recon -exec rm -f {} \;
-if [ "`type -t systemctl`" == "file" ]; then
-    sudo systemctl restart rsyslog
-    sudo systemctl restart memcached
-else
-    sudo service rsyslog restart
-    sudo service memcached restart
-fi
-
+echo
+echo "=> Setting up scripts for running Swift"
+mkdir -p $HOME/bin
+cd $HOME/swift/doc; cp saio/bin/* $HOME/bin; cd -
+chmod +x $HOME/bin/*
+echo "export SAIO_BLOCK_DEVICE=/srv/swift-disk" >> $HOME/.bashrc
 sed -i "/find \/var\/log\/swift/d" $HOME/bin/resetswift
+cp $HOME/swift/test/sample.conf /etc/swift/test.conf
+echo "export SWIFT_TEST_CONFIG_FILE=/etc/swift/test.conf" >> $HOME/.bashrc
+echo "export PATH=${PATH}:$HOME/bin" >> $HOME/.bashrc
+. $HOME/.bashrc
 
-remakerings
-startmain
+echo "=> Reinstalling Swift"
+cd /root/python-swiftclient; sudo python setup.py develop; cd - 
+cd /root/swift; sudo pip install -r requirements.txt; sudo python setup.py develop; cd -
+/bin/bash -c "/root/bin/remakerings"
+/bin/bash -c "/root/bin/startmain"
+/bin/bash
