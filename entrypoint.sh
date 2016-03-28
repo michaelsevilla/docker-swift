@@ -7,7 +7,6 @@ SWIFT_DAEMON=${SWIFT_DAEMON,,}
 DAEMONS=" proxy object container account config "
 echo $DAEMONS | grep $SWIFT_DAEMON
 
-echo
 echo "=> Setting up scripts for running Swift"
 mkdir -p $HOME/bin
 cd $HOME/swift/doc; cp saio/bin/* $HOME/bin; cd -
@@ -33,6 +32,11 @@ if [ "$SWIFT_DAEMON" == "config" ]; then
 fi
 
 echo "=> Make some loopback devices for storage"
+if [ -z "$DISK_SIZE" ]; then
+  truncate -s 1GB /srv/swift-disk
+else
+  truncate -s $DISK_SIZE /srv/swift-disk
+fi
 mkfs.xfs /srv/swift-disk 
 echo "/srv/swift-disk /mnt/sdb1 xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" >> /etc/fstab
 mount /mnt/sdb1
