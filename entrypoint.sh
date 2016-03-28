@@ -35,6 +35,7 @@ fi
 echo "=> Make some loopback devices for storage"
 mkfs.xfs /srv/swift-disk 
 echo "/srv/swift-disk /mnt/sdb1 xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0" >> /etc/fstab
+mount /mnt/sdb1
 mkdir -p /mnt/sdb1/1 /mnt/sdb1/2 /mnt/sdb1/3 /mnt/sdb1/4
 sudo chown root:root /mnt/sdb1/*
 for x in {1..4}; do sudo ln -s /mnt/sdb1/$x /srv/$x; done
@@ -55,6 +56,5 @@ if [ "$SWIFT_DAEMON" == "proxy" ]; then
   sudo service memcached start
 fi
 
-/root/bin/resetswift
 /root/bin/startmain
 /bin/bash

@@ -36,7 +36,7 @@ RUN apt-get clean && \
    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN echo "===> Setup loopback device..." && \
-    truncate -s 1GB /srv/swift-disk
+    truncate -s 10GB /srv/swift-disk
 
 RUN echo "===> Getting the code..." && \
     cd /root; git clone https://github.com/openstack/python-swiftclient.git && \
