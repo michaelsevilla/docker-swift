@@ -55,5 +55,6 @@ if [ "$SWIFT_DAEMON" == "proxy" ]; then
   sudo service memcached start
 fi
 
+/root/bin/resetswift
 /root/bin/startmain
 /bin/bash
