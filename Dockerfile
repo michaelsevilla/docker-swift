@@ -41,7 +41,7 @@ RUN echo "===> Getting the code..." && \
     cd /root; git clone https://github.com/openstack/swift.git && \
     cd /root/swift; sudo pip install -r requirements.txt; sudo python setup.py develop; cd - && \
     cd /root/swift; sudo pip install -r test-requirements.txt 
-
+RUN pip install python-keystoneclient==1.7.1
 # tasks in the entrypoint: finish setting up loopback device/partition, memcached, configure
 # skipped tasks: setting up rclocal, rsync
 

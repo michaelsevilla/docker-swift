@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-set -e
+#set -e
 
 # Check if the user gave a valid daemon
 SWIFT_DAEMON=${SWIFT_DAEMON,,}
@@ -65,7 +65,7 @@ if [ "$SWIFT_DAEMON" == "proxy" ]; then
   sudo service memcached start
 fi
 
-/root/bin/startmain
+#/root/bin/startmain
 /root/bin/resetswift
 /root/bin/startmain
 /bin/bash
