@@ -30,18 +30,21 @@ RUN apt-get clean && \
       python-pip \
       python-dnspython \
       python-mock && \
-   pip install -U pip wheel setuptools && \
-   apt-get remove -y python-pip && \
-   apt-get clean && \
+   pip install --upgrade \
+      pip \
+      python-keystoneclient==1.7.1 \
+      setuptools \
+      wheel && \
+   DEBIAN_FRONTEND=noninteractive apt-get remove -y python-pip && \
+   DEBIAN_FRONTEND=noninteractive apt-get clean && \
    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN echo "===> Getting the code..." && \
     cd /root; git clone https://github.com/openstack/python-swiftclient.git && \
     cd /root/python-swiftclient; sudo python setup.py develop; cd - && \
     cd /root; git clone https://github.com/openstack/swift.git && \
-    cd /root/swift; sudo pip install -r requirements.txt; sudo python setup.py develop; cd - && \
-    cd /root/swift; sudo pip install -r test-requirements.txt 
-RUN pip install python-keystoneclient==1.7.1
+    cd /root/swift; sudo pip install -r requirements.txt; sudo python setup.py develop; cd -
+
 # tasks in the entrypoint: finish setting up loopback device/partition, memcached, configure
 # skipped tasks: setting up rclocal, rsync
 

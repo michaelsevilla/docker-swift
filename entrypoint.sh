@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-#set -e
+set -e
 
 # Check if the user gave a valid daemon
 SWIFT_DAEMON=${SWIFT_DAEMON,,}
@@ -19,8 +19,11 @@ echo "export PATH=${PATH}:$HOME/bin" >> $HOME/.bashrc
 . $HOME/.bashrc
 
 echo "=> Reinstalling Swift"
-cd /root/python-swiftclient; sudo python setup.py develop; cd - 
-cd /root/swift; sudo pip install -r requirements.txt; sudo python setup.py develop; cd -
+cd /root/swift; 
+pip install --upgrade setuptools
+sudo pip install -r requirements.txt
+sudo python setup.py develop;
+cd -
 
 if [ "$SWIFT_DAEMON" == "config" ]; then
   cd $HOME/swift/doc; sudo cp -r saio/swift /etc/; cd -
